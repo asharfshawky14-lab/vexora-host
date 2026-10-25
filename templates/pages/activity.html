@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Activity & Events{% endblock %}
+{% block page_name %}Activity & Events{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <span class="eyebrow">SYSTEM TIMELINE</span>
+        <h1>Activity & Events</h1>
+        <p class="muted">تابع العمليات والأحداث المهمة داخل منصة VEXORA HOST.</p>
+    </div>
+    <span class="status-badge">Backend Pending</span>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span class="stat-label">Recorded Events</span>
+        <strong class="stat-value" id="event-count">0</strong>
+        <span class="muted">أحداث مسجلة في الجلسة الحالية</span>
+    </article>
+
+    <article class="stat-card">
+        <span class="stat-label">Latest Activity</span>
+        <strong class="stat-value" id="latest-event">None</strong>
+        <span class="muted">آخر حدث محلي</span>
+    </article>
+
+    <article class="stat-card">
+        <span class="stat-label">Event Source</span>
+        <strong class="stat-value">Browser</strong>
+        <span class="muted">مش سجل الخادم الحقيقي</span>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Event Timeline</h2>
+            <p class="muted">الأحداث التي تضيفها الصفحة أثناء الاستخدام.</p>
+        </div>
+        <div class="button-row">
+            <button class="btn btn-secondary" type="button" id="export-events">
+                Export CSV
+            </button>
+            <button class="btn btn-secondary" type="button" id="clear-events">
+                Clear Events
+            </button>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="form-group">
+            <label for="event-search">Search events</label>
+            <input
+                id="event-search"
+                type="search"
+                placeholder="ابحث في الأحداث..."
+                autocomplete="off"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="event-filter">Event type</label>
+            <select id="event-filter">
+                <option value="all">All events</option>
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="error">Error</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Event</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="events-table">
+                <tr>
+                    <td colspan="4">مفيش أحداث محلية مسجلة لسه.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="muted" id="events-message" aria-live="polite">
+        الأحداث هنا مؤقتة، ومش بتتخزن على الخادم.
+    </p>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Test Event Recorder</h2>
+            <p class="muted">جرّب تسجيل حدث محلي للتأكد من عمل الجدول والتصفية.</p>
+        </div>
+    </div>
+
+    <form id="event-form" class="form-stack">
+        <label for="event-title">Event title</label>
+        <input
+            id="event-title"
+            type="text"
+            maxlength="100"
+            placeholder="مثال: إعداد مشروع جديد"
+            required
+        >
+
+        <label for="event-type">Event type</label>
+        <select id="event-type" required>
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+            <option value="warning">Warning</option>
+            <option value="error">Error</option>
+        </select>
+
+        <label for="event-details">Details</label>
+        <textarea
+            id="event-details"
+            rows="3"
+            maxlength="500"
+            placeholder="تفاصيل الحدث..."
+        ></textarea>
+
+        <div class="button-row">
+            <button class="btn btn-primary" type="submit">
+                Record Event
+            </button>
+        </div>
+    </form>
+</section>
+
+<script>
+(() => {
+    const events = [];
+    const table = document.getElementById("events-table");
+    const search = document.getElementById("event-search");
+    const filter = document.getElementById("event-filter");
+    const form = document.getElementById("event-form");
+    const titleInput = document.getElementById("event-title");
+    const typeInput = document.getElementById("event-type");
+    const detailsInput = document.getElementById("event-details");
+    const count = document.getElementById("event-count");
+    const latest = document.getElementById("latest-event");
+    const message = document.getElementById("events-message");
+
+    const typeLabels = {
+        info: "Info",
+        success: "Success",
+        warning: "Warning",
+        error: "Error"
+    };
+
+    function formatTime(date) {
+        return date.toLocaleString();
+    }
+
+    function createCell(value) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        return cell;
+    }
+
+    function renderEvents() {
+        const query = search.value.trim().toLowerCase();
+        const selectedType = filter.value;
+
+        const visibleEvents = events.filter(event => {
+            const matchesType =
+                selectedType === "all" || event.type === selectedType;
+
+            const searchableText =
+                `${event.title} ${event.details} ${event.type}`.toLowerCase();
+
+            return matchesType && searchableText.includes(query);
+        });
+
+        table.replaceChildren();
+
+        if (visibleEvents.length === 0) {
+            const row = document.createElement("tr");
+            const cell = createCell(
+                events.length
+                    ? "مفيش أحداث مطابقة للفلاتر."
+                    : "مفيش أحداث محلية مسجلة لسه."
+            );
+            cell.colSpan = 4;
+            row.appendChild(cell);
+            table.appendChild(row);
+        } else {
+            visibleEvents.forEach(event => {
+                const row = document.createElement("tr");
+
+                row.appendChild(createCell(formatTime(event.time)));
+                row.appendChild(createCell(typeLabels[event.type]));
+                row.appendChild(createCell(event.title));
+                row.appendChild(createCell(event.details || "—"));
+
+                table.appendChild(row);
+            });
+        }
+
+        count.textContent = String(events.length);
+        latest.textContent = events.length ? events[0].title : "None";
+    }
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+
+        const title = titleInput.value.trim();
+
+        if (!title) {
+            message.textContent = "اكتب عنوان الحدث الأول.";
+            titleInput.focus();
+            return;
+        }
+
+        events.unshift({
+            time: new Date(),
+            title,
+            type: typeInput.value,
+            details: detailsInput.value.trim()
+        });
+
+        form.reset();
+        renderEvents();
+
+        message.textContent =
+            "تم تسجيل الحدث داخل الصفحة فقط، ولم يُرسل إلى الخادم.";
+    });
+
+    search.addEventListener("input", renderEvents);
+    filter.addEventListener("change", renderEvents);
+
+    document.getElementById("clear-events").addEventListener("click", () => {
+        if (!events.length) {
+            message.textContent = "مفيش أحداث لمسحها.";
+            return;
+        }
+
+        events.length = 0;
+        renderEvents();
+        message.textContent = "تم مسح الأحداث المحلية من الصفحة.";
+    });
+
+    document.getElementById("export-events").addEventListener("click", () => {
+        if (!events.length) {
+            message.textContent = "سجّل حدثًا واحدًا على الأقل قبل التصدير.";
+            return;
+        }
+
+        const escapeCsv = value =>
+            '"' + String(value).replace(/"/g, '""') + '"';
+
+        const rows = [
+            ["Time", "Type", "Title", "Details"],
+            ...events.map(event => [
+                formatTime(event.time),
+                event.type,
+                event.title,
+                event.details
+            ])
+        ];
+
+        const csv = "\uFEFF" + rows
+            .map(row => row.map(escapeCsv).join(","))
+            .join("\r\n");
+
+        const blob = new Blob([csv], {
+            type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "vexora-activity.csv";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        message.textContent = "تم تجهيز ملف CSV للتنزيل.";
+    });
+
+    renderEvents();
+})();
+</script>
+{% endblock %}
