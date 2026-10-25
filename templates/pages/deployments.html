@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Deployments | VEXORA HOST{% endblock %}
+{% block page_name %}Deployments{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div>
+        <span class="eyebrow">RELEASE MANAGEMENT</span>
+        <h1>النشر والتحديثات</h1>
+        <p class="muted">جهّز عمليات تحديث مشاريع Python ومتابعة نتائجها.</p>
+    </div>
+    <span class="status-badge">بانتظار الربط</span>
+</section><section class="stats-grid">
+    <article class="stat-card">
+        <span class="stat-label">عمليات النشر</span>
+        <strong id="deploymentCount">0</strong>
+        <span class="muted">طلبات تجريبية في الصفحة</span>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">آخر نشر</span>
+        <strong id="lastDeployment">—</strong>
+        <span class="muted">لا توجد عملية نشر فعلية</span>
+    </article>
+    <article class="stat-card">
+        <span class="stat-label">حالة محرك النشر</span>
+        <strong>غير متصل</strong>
+        <span class="muted">لم يتم ربط مدير المشاريع</span>
+    </article>
+</section><section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>طلب نشر جديد</h2>
+            <p class="muted">سجّل إعدادات الطلب محليًا قبل تفعيل النشر الفعلي.</p>
+        </div>
+    </div><div class="notice">
+    <strong>مهم</strong>
+    <p class="muted">
+        إنشاء الطلب لا يرفع ملفات ولا يعيد تشغيل البوت.
+        النشر الحقيقي سيحتاج إلى ربط آمن بملفات المشروع ومحرك التشغيل.
+    </p>
+</div>
+
+<form id="deploymentForm" class="settings-form">
+    <div class="form-group">
+        <label for="deploymentProject">اسم المشروع</label>
+        <input
+            id="deploymentProject"
+            name="deploymentProject"
+            type="text"
+            maxlength="60"
+            placeholder="مثال: my-telegram-bot"
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="deploymentSource">مصدر التحديث</label>
+        <select id="deploymentSource" name="deploymentSource">
+            <option value="files">ملفات المشروع الحالية</option>
+            <option value="github">مستودع GitHub</option>
+            <option value="archive">ملف ZIP مرفوع</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="deploymentVersion">اسم الإصدار أو الملاحظة</label>
+        <input
+            id="deploymentVersion"
+            name="deploymentVersion"
+            type="text"
+            maxlength="100"
+            placeholder="مثال: تحديث إصلاح الأخطاء"
+        >
+    </div>
+
+    <div class="form-group">
+        <label class="toggle-row" for="deploymentBackup">
+            <span>
+                <strong>طلب نسخة احتياطية قبل النشر</strong>
+                <small class="muted">خيار مخطط؛ لن ينشئ نسخة فعلية حاليًا.</small>
+            </span>
+            <input id="deploymentBackup" name="deploymentBackup" type="checkbox" checked>
+        </label>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">تسجيل طلب النشر</button>
+        <button type="button" class="btn btn-secondary" id="resetDeployment">
+            مسح الحقول
+        </button>
+    </div>
+
+    <p id="deploymentMessage" class="form-message" role="status" aria-live="polite"></p>
+</form>
+
+</section><section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>سجل عمليات النشر</h2>
+            <p class="muted">يعرض الطلبات المسجلة داخل الصفحة فقط.</p>
+        </div>
+        <button type="button" class="btn btn-secondary" id="clearDeployments">
+            مسح السجل
+        </button>
+    </div><div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>المشروع</th>
+                <th>المصدر</th>
+                <th>الإصدار</th>
+                <th>الوقت</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody id="deploymentTableBody">
+            <tr>
+                <td colspan="5" class="muted">لا توجد طلبات نشر حتى الآن.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</section><script>
+(() => {
+    const form = document.getElementById("deploymentForm");
+    const projectInput = document.getElementById("deploymentProject");
+    const sourceInput = document.getElementById("deploymentSource");
+    const versionInput = document.getElementById("deploymentVersion");
+    const backupInput = document.getElementById("deploymentBackup");
+    const resetButton = document.getElementById("resetDeployment");
+    const clearButton = document.getElementById("clearDeployments");
+    const tableBody = document.getElementById("deploymentTableBody");
+    const countLabel = document.getElementById("deploymentCount");
+    const lastLabel = document.getElementById("lastDeployment");
+    const message = document.getElementById("deploymentMessage");
+
+    if (
+        !form || !projectInput || !sourceInput || !versionInput ||
+        !backupInput || !resetButton || !clearButton || !tableBody ||
+        !countLabel || !lastLabel || !message
+    ) return;
+
+    const sourceLabels = {
+        files: "الملفات الحالية",
+        github: "GitHub",
+        archive: "ملف ZIP"
+    };
+
+    let deployments = [];
+
+    function showMessage(text, error = false) {
+        message.textContent = text;
+        message.dataset.state = error ? "error" : "success";
+    }
+
+    function cell(text) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        return td;
+    }
+
+    function render() {
+        tableBody.replaceChildren();
+
+        if (!deployments.length) {
+            const row = document.createElement("tr");
+            const td = cell("لا توجد طلبات نشر حتى الآن.");
+            td.colSpan = 5;
+            td.className = "muted";
+            row.appendChild(td);
+            tableBody.appendChild(row);
+        } else {
+            deployments.forEach(item => {
+                const row = document.createElement("tr");
+                row.appendChild(cell(item.project));
+                row.appendChild(cell(sourceLabels[item.source]));
+                row.appendChild(cell(item.version || "بدون ملاحظة"));
+                row.appendChild(cell(item.time));
+                row.appendChild(cell("طلب تجريبي فقط"));
+                tableBody.appendChild(row);
+            });
+        }
+
+        countLabel.textContent = String(deployments.length);
+        lastLabel.textContent = deployments.length
+            ? deployments[deployments.length - 1].time
+            : "—";
+    }
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+
+        const project = projectInput.value.trim();
+
+        if (!project) {
+            showMessage("اكتب اسم المشروع أولًا.", true);
+            projectInput.focus();
+            return;
+        }
+
+        deployments.push({
+            project,
+            source: sourceInput.value,
+            version: versionInput.value.trim(),
+            backupRequested: backupInput.checked,
+            time: new Date().toLocaleString()
+        });
+
+        render();
+        form.reset();
+        backupInput.checked = true;
+
+        showMessage(
+            "تم تسجيل الطلب داخل الصفحة فقط؛ لم يتم رفع أو تشغيل أي ملفات."
+        );
+    });
+
+    resetButton.addEventListener("click", () => {
+        form.reset();
+        backupInput.checked = true;
+        showMessage("تم مسح الحقول.");
+    });
+
+    clearButton.addEventListener("click", () => {
+        deployments = [];
+        render();
+        showMessage("تم مسح سجل الطلبات التجريبي.");
+    });
+
+    render();
+})();
+</script>{% endblock %}
