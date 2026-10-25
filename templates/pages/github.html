@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}GitHub Integration{% endblock %}
+{% block page_name %}GitHub{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <span class="eyebrow">SOURCE CONTROL</span>
+        <h1>GitHub Integration</h1>
+        <p class="muted">جهّز مستودعات GitHub لمشروعات البوتات بتاعتك.</p>
+    </div>
+    <span class="status-badge">Backend Pending</span>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span class="stat-label">Connection</span>
+        <strong class="stat-value">Not Connected</strong>
+        <span class="muted">لم يتم ربط حساب GitHub</span>
+    </article>
+
+    <article class="stat-card">
+        <span class="stat-label">Repository</span>
+        <strong class="stat-value">Not Selected</strong>
+        <span class="muted">اختار المستودع بعد الربط</span>
+    </article>
+
+    <article class="stat-card">
+        <span class="stat-label">Sync Status</span>
+        <strong class="stat-value">Not Synced</strong>
+        <span class="muted">المزامنة غير مفعّلة حاليًا</span>
+    </article>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Repository Settings</h2>
+                <p class="muted">أدخل رابط المستودع علشان تجهّز الإعدادات.</p>
+            </div>
+            <span class="panel-icon">⌘</span>
+        </div>
+
+        <form id="github-form" class="form-stack">
+            <label for="repo-url">GitHub Repository URL</label>
+            <input
+                id="repo-url"
+                name="repo_url"
+                type="url"
+                placeholder="https://github.com/username/repository"
+                autocomplete="url"
+                required
+            >
+
+            <label for="branch-name">Branch</label>
+            <input
+                id="branch-name"
+                name="branch"
+                type="text"
+                placeholder="main"
+                value="main"
+                required
+                maxlength="120"
+            >
+
+            <label for="project-path">Project Folder</label>
+            <input
+                id="project-path"
+                name="project_path"
+                type="text"
+                placeholder="مثال: bot/"
+                maxlength="240"
+            >
+
+            <div class="notice">
+                <strong>مهم:</strong>
+                النموذج ده بيجهّز البيانات داخل الصفحة فقط.
+                ربط GitHub الفعلي والاستيراد والمزامنة محتاجين Backend آمن.
+            </div>
+
+            <div class="button-row">
+                <button class="btn btn-primary" type="submit">
+                    Validate Settings
+                </button>
+                <button class="btn btn-secondary" type="button" id="clear-github">
+                    Clear
+                </button>
+            </div>
+        </form>
+
+        <div id="github-result" class="notice" hidden aria-live="polite"></div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Integration Checklist</h2>
+                <p class="muted">المطلوب قبل تشغيل التكامل الحقيقي.</p>
+            </div>
+        </div>
+
+        <div class="check-list">
+            <div class="check-item">
+                <span class="check-dot"></span>
+                <div>
+                    <strong>Secure GitHub Authorization</strong>
+                    <p class="muted">OAuth آمن من خلال الخادم.</p>
+                </div>
+            </div>
+
+            <div class="check-item">
+                <span class="check-dot"></span>
+                <div>
+                    <strong>Repository Import</strong>
+                    <p class="muted">استيراد الملفات للـ project المحدد.</p>
+                </div>
+            </div>
+
+            <div class="check-item">
+                <span class="check-dot"></span>
+                <div>
+                    <strong>Commit & Sync</strong>
+                    <p class="muted">مزامنة التعديلات مع المستودع.</p>
+                </div>
+            </div>
+
+            <div class="check-item">
+                <span class="check-dot"></span>
+                <div>
+                    <strong>Webhook Events</strong>
+                    <p class="muted">متابعة التحديثات عند وصولها.</p>
+                </div>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Repository Preview</h2>
+            <p class="muted">معاينة الإعدادات اللي دخلتها قبل الربط.</p>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Repository</th>
+                    <th>Branch</th>
+                    <th>Project Folder</th>
+                </tr>
+            </thead>
+            <tbody id="github-preview">
+                <tr>
+                    <td colspan="3">لسه مفيش إعدادات للمعاينة.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<script>
+(() => {
+    const form = document.getElementById("github-form");
+    const urlInput = document.getElementById("repo-url");
+    const branchInput = document.getElementById("branch-name");
+    const pathInput = document.getElementById("project-path");
+    const result = document.getElementById("github-result");
+    const preview = document.getElementById("github-preview");
+    const clearButton = document.getElementById("clear-github");
+
+    function showResult(message) {
+        result.textContent = message;
+        result.hidden = false;
+    }
+
+    function validRepositoryUrl(value) {
+        try {
+            const url = new URL(value);
+            const parts = url.pathname.split("/").filter(Boolean);
+
+            return (
+                url.protocol === "https:" &&
+                url.hostname.toLowerCase() === "github.com" &&
+                parts.length === 2 &&
+                parts.every(part => part !== "." && part !== "..")
+            );
+        } catch {
+            return false;
+        }
+    }
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+
+        const repoUrl = urlInput.value.trim().replace(/\/+$/, "");
+        const branch = branchInput.value.trim();
+        const projectPath = pathInput.value.trim();
+
+        if (!validRepositoryUrl(repoUrl)) {
+            showResult(
+                "الرابط غير صحيح. استخدم رابط مستودع بالشكل: https://github.com/username/repository"
+            );
+            return;
+        }
+
+        if (!branch) {
+            showResult("اكتب اسم الفرع، مثل main.");
+            branchInput.focus();
+            return;
+        }
+
+        if (projectPath.startsWith("/") || projectPath.includes("..")) {
+            showResult("مسار المجلد غير صالح. استخدم مسارًا نسبيًا داخل المشروع.");
+            pathInput.focus();
+            return;
+        }
+
+        preview.replaceChildren();
+
+        const row = document.createElement("tr");
+        [repoUrl, branch, projectPath || "(جذر المشروع)"].forEach(value => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+
+        preview.appendChild(row);
+
+        showResult(
+            "تم التحقق من شكل الإعدادات داخل الصفحة فقط. لم يتم الاتصال بـ GitHub أو استيراد أي ملفات."
+        );
+    });
+
+    clearButton.addEventListener("click", () => {
+        form.reset();
+        branchInput.value = "main";
+        preview.replaceChildren();
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 3;
+        cell.textContent = "لسه مفيش إعدادات للمعاينة.";
+        row.appendChild(cell);
+        preview.appendChild(row);
+
+        result.hidden = true;
+        result.textContent = "";
+    });
+})();
+</script>
+{% endblock %}
