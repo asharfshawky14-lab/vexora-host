@@ -23,6 +23,9 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or os.urandom(32)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vexora-host")
 
+# Initialize the persistent application database.
+init_db()
+
 # All dashboard sections and their template names.
 SECTIONS = {
     "dashboard": {
