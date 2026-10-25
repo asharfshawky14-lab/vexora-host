@@ -17,7 +17,7 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "static"),
 )
 
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or os.urandom(32)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vexora-host")
