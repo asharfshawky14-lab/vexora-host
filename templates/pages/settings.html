@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | VEXORA HOST{% endblock %}
+{% block page_name %}Settings{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div>
+        <span class="eyebrow">WORKSPACE CONFIGURATION</span>
+        <h1>إعدادات المشروع</h1>
+        <p class="muted">إدارة تفضيلات مشروعك وإعدادات التشغيل الأساسية.</p>
+    </div>
+    <span class="status-badge">إعدادات الواجهة</span>
+</section><div class="settings-layout">
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>الإعدادات العامة</h2>
+                <p class="muted">التغييرات هنا محلية داخل الصفحة حاليًا.</p>
+            </div>
+        </div>    <form id="settingsForm" class="settings-form">
+        <div class="form-group">
+            <label for="projectName">اسم مساحة العمل</label>
+            <input
+                id="projectName"
+                name="projectName"
+                type="text"
+                maxlength="60"
+                value="VEXORA HOST"
+                required
+            >
+            <small class="muted">اسم العرض داخل الواجهة.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="pythonVersion">إصدار Python المفضل</label>
+            <select id="pythonVersion" name="pythonVersion">
+                <option value="3.12">Python 3.12</option>
+                <option value="3.13">Python 3.13</option>
+                <option value="3.11">Python 3.11</option>
+            </select>
+            <small class="muted">اختيار مبدئي فقط، ولا يغير إصدار السيرفر.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="timezone">المنطقة الزمنية</label>
+            <select id="timezone" name="timezone">
+                <option value="UTC">UTC</option>
+                <option value="Africa/Cairo">Africa/Cairo</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="America/New_York">America/New_York</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="logRetention">عدد أيام الاحتفاظ بالسجلات</label>
+            <select id="logRetention" name="logRetention">
+                <option value="1">يوم واحد</option>
+                <option value="3">3 أيام</option>
+                <option value="7" selected>7 أيام</option>
+                <option value="14">14 يومًا</option>
+                <option value="30">30 يومًا</option>
+            </select>
+            <small class="muted">قيمة واجهة فقط حتى ربط نظام السجلات.</small>
+        </div>
+
+        <div class="form-group">
+            <label class="toggle-row" for="maintenanceMode">
+                <span>
+                    <strong>وضع الصيانة</strong>
+                    <small class="muted">مفتاح تجريبي لا يوقف المشاريع فعليًا.</small>
+                </span>
+                <input
+                    id="maintenanceMode"
+                    name="maintenanceMode"
+                    type="checkbox"
+                >
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label class="toggle-row" for="autoRefresh">
+                <span>
+                    <strong>تحديث الواجهة تلقائيًا</strong>
+                    <small class="muted">تفضيل محفوظ في المتصفح لهذا الجهاز.</small>
+                </span>
+                <input
+                    id="autoRefresh"
+                    name="autoRefresh"
+                    type="checkbox"
+                >
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">
+                حفظ تفضيلات المتصفح
+            </button>
+            <button class="btn btn-secondary" id="resetSettings" type="button">
+                استعادة الافتراضي
+            </button>
+        </div>
+
+        <p id="settingsMessage" class="form-message" role="status" aria-live="polite"></p>
+    </form>
+</section>
+
+<aside class="panel settings-info">
+    <h2>حالة الربط</h2>
+    <div class="settings-list">
+        <div class="settings-row">
+            <span>حفظ إعدادات السيرفر</span>
+            <span class="status-badge">غير متصل</span>
+        </div>
+        <div class="settings-row">
+            <span>تغيير إصدار Python</span>
+            <span class="status-badge">غير متصل</span>
+        </div>
+        <div class="settings-row">
+            <span>وضع الصيانة الحقيقي</span>
+            <span class="status-badge">غير متصل</span>
+        </div>
+    </div>
+
+    <p class="muted">
+        الخيارات التي تؤثر على تشغيل البوت تحتاج ربطًا بالخلفية ومحرك تشغيل آمن.
+    </p>
+</aside>
+
+</div><script>
+(() => {
+    const form = document.getElementById("settingsForm");
+    const resetButton = document.getElementById("resetSettings");
+    const message = document.getElementById("settingsMessage");
+
+    if (!form || !resetButton || !message) return;
+
+    const storageKey = "vexora-host-settings-v1";
+
+    const defaults = {
+        projectName: "VEXORA HOST",
+        pythonVersion: "3.12",
+        timezone: "UTC",
+        logRetention: "7",
+        maintenanceMode: false,
+        autoRefresh: false
+    };
+
+    function getFormValues() {
+        return {
+            projectName: form.elements.projectName.value.trim(),
+            pythonVersion: form.elements.pythonVersion.value,
+            timezone: form.elements.timezone.value,
+            logRetention: form.elements.logRetention.value,
+            maintenanceMode: form.elements.maintenanceMode.checked,
+            autoRefresh: form.elements.autoRefresh.checked
+        };
+    }
+
+    function applyValues(values) {
+        form.elements.projectName.value = values.projectName;
+        form.elements.pythonVersion.value = values.pythonVersion;
+        form.elements.timezone.value = values.timezone;
+        form.elements.logRetention.value = values.logRetention;
+        form.elements.maintenanceMode.checked = values.maintenanceMode;
+        form.elements.autoRefresh.checked = values.autoRefresh;
+    }
+
+    function showMessage(text, isError = false) {
+        message.textContent = text;
+        message.dataset.state = isError ? "error" : "success";
+    }
+
+    try {
+        const saved = localStorage.getItem(storageKey);
+
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            applyValues({ ...defaults, ...parsed });
+        }
+    } catch {
+        showMessage("تعذر تحميل التفضيلات المحفوظة على هذا الجهاز.", true);
+    }
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const values = getFormValues();
+
+        if (!values.projectName) {
+            showMessage("اكتب اسمًا لمساحة العمل أولًا.", true);
+            return;
+        }
+
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(values));
+            showMessage("تم حفظ التفضيلات على هذا الجهاز فقط.");
+        } catch {
+            showMessage("تعذر الحفظ في المتصفح. تحقق من مساحة التخزين.", true);
+        }
+    });
+
+    resetButton.addEventListener("click", () => {
+        applyValues(defaults);
+
+        try {
+            localStorage.removeItem(storageKey);
+            showMessage("تمت استعادة الإعدادات الافتراضية.");
+        } catch {
+            showMessage("تمت استعادة القيم في الصفحة، لكن تعذر مسح التخزين.", true);
+        }
+    });
+})();
+</script>{% endblock %}
