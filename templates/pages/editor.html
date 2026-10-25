@@ -1,0 +1,208 @@
+
+{% extends "base.html" %}
+
+{% block title %}Code Editor | VEXORA HOST{% endblock %}
+{% block page_name %}Code Editor{% endblock %}
+
+{% block content %}
+<section>
+    <span class="badge badge-purple">DEVELOPMENT TOOLS</span>
+    <h1 style="margin-top:14px;">Code <span class="text-cyan">Editor</span></h1>
+    <p class="page-subtitle">
+        Prepare and edit Python source code for your bot projects.
+    </p>
+</section>
+
+<section class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin-bottom:5px;">Python Workspace</h2>
+            <p class="muted" style="margin-bottom:0;">
+                Local editor interface — project file integration is pending.
+            </p>
+        </div>
+        <span class="badge">Preview mode</span>
+    </div>
+
+    <div class="form-group" style="margin-top:22px;">
+        <label for="editorProject">Project</label>
+        <select class="form-control" id="editorProject" disabled>
+            <option>No project connected</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="editorFilename">Filename</label>
+        <input
+            class="form-control"
+            id="editorFilename"
+            type="text"
+            value="main.py"
+            maxlength="100"
+            autocomplete="off"
+            spellcheck="false"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="editorCode">Source code</label>
+        <textarea
+            class="code-editor"
+            id="editorCode"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+            aria-describedby="editorNotice"
+            placeholder="# Write your Python code here..."
+        ># VEXORA HOST
+# Python editor preview
+#
+# Project storage has not been connected yet.
+# This text is only an example and is not saved to a server.
+
+def main():
+    print("Hello from VEXORA HOST")
+
+if __name__ == "__main__":
+    main()
+</textarea>
+    </div>
+
+    <div id="editorNotice" class="flash-message flash-info" role="status">
+        Preview only: changes stay in this browser page and are not saved.
+        Server-side saving and project selection are not enabled yet.
+    </div>
+
+    <div class="actions" style="margin-top:16px;">
+        <button class="btn btn-primary" id="editorSaveButton" type="button" disabled>
+            Save File
+        </button>
+        <button class="btn btn-outline" id="editorDownloadButton" type="button">
+            Download .py
+        </button>
+        <button class="btn btn-outline" id="editorResetButton" type="button">
+            Reset Example
+        </button>
+        <a class="btn btn-outline" href="{{ url_for('files_page') }}">
+            File Manager
+        </a>
+    </div>
+</section>
+
+<section class="grid" style="margin-top:22px;">
+    <div class="col-6">
+        <article class="panel">
+            <h2>Editor Features</h2>
+            <div style="display:grid;gap:13px;margin-top:15px;">
+                <div>
+                    <strong class="text-cyan">Python source editing</strong>
+                    <p class="muted" style="margin:4px 0 0;">
+                        Edit the example code in the text area above.
+                    </p>
+                </div>
+                <div>
+                    <strong class="text-cyan">Download source</strong>
+                    <p class="muted" style="margin:4px 0 0;">
+                        Download your current text as a Python file.
+                    </p>
+                </div>
+                <div>
+                    <strong class="text-cyan">Server integration</strong>
+                    <p class="muted" style="margin:4px 0 0;">
+                        Saving directly into a project will be added after
+                        secure file storage is implemented.
+                    </p>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div class="col-6">
+        <article class="panel">
+            <h2>Before Running Code</h2>
+            <p class="muted">
+                Python code can access files, networks and system resources.
+            </p>
+            <ul class="muted" style="padding-left:20px;">
+                <li>Keep bot tokens and passwords private.</li>
+                <li>Review code before running it.</li>
+                <li>Install required packages for the selected project.</li>
+                <li>Run user code only inside an isolated worker.</li>
+            </ul>
+            <a class="btn btn-outline" href="{{ url_for('dependencies') }}">
+                Manage Dependencies
+            </a>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    "use strict";
+
+    const codeArea = document.getElementById("editorCode");
+    const filenameInput = document.getElementById("editorFilename");
+    const downloadButton = document.getElementById("editorDownloadButton");
+    const resetButton = document.getElementById("editorResetButton");
+    const notice = document.getElementById("editorNotice");
+
+    if (!codeArea || !filenameInput || !downloadButton || !resetButton) {
+        return;
+    }
+
+    const exampleCode = codeArea.value;
+
+    downloadButton.addEventListener("click", function () {
+        let filename = filenameInput.value.trim();
+
+        if (!filename) {
+            filename = "main.py";
+        }
+
+        filename = filename.split(/[\\/]/).pop();
+
+        if (!filename.toLowerCase().endsWith(".py")) {
+            filename += ".py";
+        }
+
+        const blob = new Blob(
+            [codeArea.value],
+            { type: "text/x-python;charset=utf-8" }
+        );
+
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.setTimeout(function () {
+            URL.revokeObjectURL(objectUrl);
+        }, 1000);
+
+        notice.textContent =
+            "A download was requested. Server-side saving is not enabled yet.";
+        notice.className = "flash-message flash-info";
+    });
+
+    resetButton.addEventListener("click", function () {
+        if (!window.confirm("Reset the editor to the example code?")) {
+            return;
+        }
+
+        codeArea.value = exampleCode;
+        filenameInput.value = "main.py";
+
+        notice.textContent =
+            "Example restored. This editor does not save files to the server.";
+        notice.className = "flash-message flash-info";
+    });
+})();
+</script>
+{% endblock %}
