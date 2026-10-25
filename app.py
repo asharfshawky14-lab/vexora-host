@@ -4,6 +4,7 @@ import logging
 
 from flask import Flask, render_template, jsonify
 from werkzeug.exceptions import HTTPException
+from database import init_db
 
 # ==================================================
 # VEXORA HOST - Main Application
