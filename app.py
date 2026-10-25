@@ -134,6 +134,85 @@ def dashboard():
 @app.route("/projects")
 def projects():
     return render_section("projects")
+    
+# ==================================================
+# Projects API - Database-backed project storage
+# ==================================================
+
+@app.route("/api/projects", methods=["GET"])
+def api_list_projects():
+    with get_db() as connection:
+        projects = connection.execute(
+            """
+            SELECT id, name, description, runtime, status,
+                   created_at, updated_at
+            FROM projects
+            ORDER BY id DESC
+            """
+        ).fetchall()
+
+    return jsonify({
+        "projects": [dict(project) for project in projects]
+    }), 200
+
+
+@app.route("/api/projects", methods=["POST"])
+def api_create_project():
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "error": "Send project details as JSON."
+        }), 400
+
+    name = data.get("name")
+    description = data.get("description", "")
+    runtime = data.get("runtime", "python")
+
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({
+            "error": "Project name is required."
+        }), 400
+
+    if len(name.strip()) > 100:
+        return jsonify({
+            "error": "Project name must be 100 characters or less."
+        }), 400
+
+    if not isinstance(description, str) or len(description) > 1000:
+        return jsonify({
+            "error": "Description must be 1000 characters or less."
+        }), 400
+
+    if runtime != "python":
+        return jsonify({
+            "error": "Only Python projects are supported currently."
+        }), 400
+
+    with get_db() as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO projects (name, description, runtime, status)
+            VALUES (?, ?, ?, ?)
+            """,
+            (name.strip(), description.strip(), "python", "stopped"),
+        )
+
+        project = connection.execute(
+            """
+            SELECT id, name, description, runtime, status,
+                   created_at, updated_at
+            FROM projects
+            WHERE id = ?
+            """,
+            (cursor.lastrowid,),
+        ).fetchone()
+
+    return jsonify({
+        "message": "Project saved successfully.",
+        "project": dict(project),
+    }), 201
+
 
 
 # ==================================================
