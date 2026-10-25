@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090b14">
+    <meta name="description" content="VEXORA HOST — Python Bot Hosting Platform">
+    <title>{% block title %}VEXORA HOST{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <a class="brand" href="{{ url_for('dashboard') }}">
+                <span class="brand-icon">V</span>
+                <span class="brand-name">VEXORA<span> HOST</span></span>
+            </a>
+
+            <div class="sidebar-label">WORKSPACE</div>
+
+            <nav class="main-nav">
+                <a href="{{ url_for('dashboard') }}"
+                   class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                    <span class="nav-icon">◈</span><span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('projects') }}"
+                   class="nav-link {% if active_page == 'projects' %}active{% endif %}">
+                    <span class="nav-icon">▣</span><span>Projects / Servers</span>
+                </a>
+                <a href="{{ url_for('files_page') }}"
+                   class="nav-link {% if active_page == 'files' %}active{% endif %}">
+                    <span class="nav-icon">▤</span><span>Files</span>
+                </a>
+                <a href="{{ url_for('editor') }}"
+                   class="nav-link {% if active_page == 'editor' %}active{% endif %}">
+                    <span class="nav-icon">⌘</span><span>Code Editor</span>
+                </a>
+                <a href="{{ url_for('terminal') }}"
+                   class="nav-link {% if active_page == 'terminal' %}active{% endif %}">
+                    <span class="nav-icon">›_</span><span>Terminal</span>
+                </a>
+                <a href="{{ url_for('logs') }}"
+                   class="nav-link {% if active_page == 'logs' %}active{% endif %}">
+                    <span class="nav-icon">≡</span><span>Logs</span>
+                </a>
+
+                <div class="sidebar-label">CONFIGURATION</div>
+
+                <a href="{{ url_for('settings') }}"
+                   class="nav-link {% if active_page == 'settings' %}active{% endif %}">
+                    <span class="nav-icon">⚙</span><span>Settings</span>
+                </a>
+                <a href="{{ url_for('environment') }}"
+                   class="nav-link {% if active_page == 'environment' %}active{% endif %}">
+                    <span class="nav-icon">{ }</span><span>Environment Variables</span>
+                </a>
+                <a href="{{ url_for('dependencies') }}"
+                   class="nav-link {% if active_page == 'dependencies' %}active{% endif %}">
+                    <span class="nav-icon">⌁</span><span>Dependencies</span>
+                </a>
+                <a href="{{ url_for('startup') }}"
+                   class="nav-link {% if active_page == 'startup' %}active{% endif %}">
+                    <span class="nav-icon">▷</span><span>Startup</span>
+                </a>
+
+                <div class="sidebar-label">MANAGEMENT</div>
+
+                <a href="{{ url_for('monitoring') }}"
+                   class="nav-link {% if active_page == 'monitoring' %}active{% endif %}">
+                    <span class="nav-icon">◴</span><span>Monitoring</span>
+                </a>
+                <a href="{{ url_for('backups') }}"
+                   class="nav-link {% if active_page == 'backups' %}active{% endif %}">
+                    <span class="nav-icon">▧</span><span>Backups</span>
+                </a>
+                <a href="{{ url_for('deployments') }}"
+                   class="nav-link {% if active_page == 'deployments' %}active{% endif %}">
+                    <span class="nav-icon">⇧</span><span>Deployments</span>
+                </a>
+                <a href="{{ url_for('github_page') }}"
+                   class="nav-link {% if active_page == 'github' %}active{% endif %}">
+                    <span class="nav-icon">⑂</span><span>GitHub</span>
+                </a>
+                <a href="{{ url_for('activity') }}"
+                   class="nav-link {% if active_page == 'activity' %}active{% endif %}">
+                    <span class="nav-icon">◷</span><span>Activity / Events</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="status-dot"></span>
+                <span>VEXORA HOST</span>
+                <span class="version">v1.0</span>
+            </div>
+        </aside>
+
+        <div class="main-area">
+            <header class="topbar">
+                <button class="menu-toggle" id="menuToggle"
+                        type="button" aria-label="Toggle navigation"
+                        aria-expanded="false">☰</button>
+
+                <div class="breadcrumb">
+                    <span>VEXORA HOST</span>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">
+                        {% block page_name %}Dashboard{% endblock %}
+                    </span>
+                </div>
+
+                <div class="topbar-right">
+                    <span class="system-indicator">
+                        <span class="status-dot"></span> Control Panel
+                    </span>
+                </div>
+            </header>
+
+            <main class="page-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container">
+                            {% for category, message in messages %}
+                                <div class="flash-message flash-{{ category }}"
+                                     role="status">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="page-footer">
+                <span>© 2026 VEXORA HOST</span>
+                <span>Built for your projects.</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+                                                          </html>
+                                                          
