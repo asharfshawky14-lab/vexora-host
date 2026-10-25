@@ -1,0 +1,129 @@
+
+{% extends "base.html" %}
+
+{% block title %}Files | VEXORA HOST{% endblock %}
+{% block page_name %}Files{% endblock %}
+
+{% block content %}
+<section>
+    <span class="badge badge-purple">FILE WORKSPACE</span>
+    <h1 style="margin-top:14px;">File <span class="text-cyan">Manager</span></h1>
+    <p class="page-subtitle">
+        Organize Python source files and project configuration.
+    </p>
+</section>
+
+<section class="grid">
+    <div class="col-4">
+        <article class="stat-card">
+            <div class="stat-label">Total Files</div>
+            <div class="stat-value text-cyan">—</div>
+            <div class="stat-note">Waiting for file storage integration</div>
+        </article>
+    </div>
+    <div class="col-4">
+        <article class="stat-card">
+            <div class="stat-label">Python Files</div>
+            <div class="stat-value text-purple">—</div>
+            <div class="stat-note">Python source files</div>
+        </article>
+    </div>
+    <div class="col-4">
+        <article class="stat-card">
+            <div class="stat-label">Storage Used</div>
+            <div class="stat-value">—</div>
+            <div class="stat-note">Storage quota not configured</div>
+        </article>
+    </div>
+</section>
+
+<section class="panel" style="margin-top:22px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin-bottom:5px;">Project Files</h2>
+            <p class="muted" style="margin-bottom:0;">
+                Upload and browse files after storage is connected.
+            </p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('projects') }}">
+            Projects / Servers
+        </a>
+    </div>
+
+    <div class="empty-state">
+        <div class="empty-state-icon">▤</div>
+        <h3>File storage is not connected yet</h3>
+        <p>
+            No files have been uploaded from this page.
+            The upload, download, rename and delete operations need a
+            secure backend before they can be enabled.
+        </p>
+    </div>
+</section>
+
+<section class="grid" style="margin-top:22px;">
+    <div class="col-6">
+        <article class="panel">
+            <h2>Supported File Types</h2>
+            <p class="muted">The interface is designed for common bot project files.</p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Extension</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-purple">.py</span></td>
+                            <td>Python source code</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">.txt</span></td>
+                            <td>Requirements and text files</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">.json</span></td>
+                            <td>Project configuration</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">.md</span></td>
+                            <td>Documentation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </div>
+
+    <div class="col-6">
+        <article class="panel">
+            <h2>File Safety</h2>
+            <p class="muted">Important rules for a secure project workspace.</p>
+
+            <div style="display:grid;gap:14px;margin-top:18px;">
+                <div>
+                    <strong class="text-cyan">Project isolation</strong>
+                    <p class="muted" style="margin:4px 0 0;">
+                        Each project should only access its own files.
+                    </p>
+                </div>
+                <div>
+                    <strong class="text-cyan">Private credentials</strong>
+                    <p class="muted" style="margin:4px 0 0;">
+                        Keep bot tokens and passwords out of public source files.
+                    </p>
+                </div>
+                <div>
+                    <strong class="text-cyan">Validated uploads</strong>
+                    <p class="muted" style="margin:4px 0 0;">
+                        The backend must validate filenames, file sizes and paths.
+                    </p>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+{% endblock %}
