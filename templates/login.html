@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b14">
+    <meta name="color-scheme" content="dark">
+
+    <title>تسجيل الدخول | VEXORA HOST</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/app.css') }}">
+
+    <style>
+        .login-page {
+            display: grid;
+            min-height: 100vh;
+            padding: 24px;
+            place-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .login-page::before,
+        .login-page::after {
+            content: "";
+            position: fixed;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            opacity: .19;
+        }
+
+        .login-page::before {
+            top: -130px;
+            right: -90px;
+            background: #8554f6;
+        }
+
+        .login-page::after {
+            bottom: -150px;
+            left: -100px;
+            background: #24cde5;
+        }
+
+        .login-layout {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
+            width: min(100%, 960px);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: rgba(13, 19, 32, .94);
+            box-shadow: 0 30px 100px rgba(0, 0, 0, .4);
+        }
+
+        .login-intro {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 52px 42px;
+            background:
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(139, 92, 246, .19),
+                    transparent 55%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(24, 32, 54, .96),
+                    rgba(12, 18, 31, .98)
+                );
+            border-inline-end: 1px solid var(--border);
+        }
+
+        .login-brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 46px;
+        }
+
+        .login-brand .brand-mark {
+            flex-basis: 52px;
+            width: 52px;
+            height: 52px;
+            font-size: 28px;
+        }
+
+        .login-brand strong {
+            display: block;
+            font-size: 21px;
+            letter-spacing: 2px;
+        }
+
+        .login-brand small {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        .login-intro h1 {
+            margin: 0;
+            font-size: clamp(28px, 4vw, 40px);
+            line-height: 1.35;
+            font-weight: 900;
+        }
+
+        .login-intro h1 span {
+            color: var(--purple);
+        }
+
+        .login-intro > p {
+            max-width: 390px;
+            margin: 18px 0 0;
+            color: var(--muted);
+            line-height: 2;
+        }
+
+        .login-features {
+            display: grid;
+            gap: 15px;
+            margin-top: 34px;
+        }
+
+        .login-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #c4cee4;
+            font-size: 13px;
+        }
+
+        .feature-icon {
+            display: grid;
+            flex: 0 0 34px;
+            width: 34px;
+            height: 34px;
+            place-items: center;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .035);
+            color: var(--cyan);
+        }
+
+        .login-form-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 42px 32px;
+        }
+
+        .login-form-panel h2 {
+            margin: 0;
+            font-size: 25px;
+            font-weight: 850;
+        }
+
+        .login-subtitle {
+            margin: 8px 0 28px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .login-form {
+            display: grid;
+            gap: 19px;
+        }
+
+        .login-input-wrap {
+            position: relative;
+        }
+
+        .login-input-wrap input {
+            min-height: 49px;
+            padding-inline: 14px;
+        }
+
+        .login-submit {
+            width: 100%;
+            min-height: 49px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .login-security {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-top: 23px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: rgba(255, 255, 255, .02);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.9;
+        }
+
+        .login-security span {
+            color: var(--green);
+        }
+
+        .login-footer {
+            margin-top: 28px;
+            color: #697794;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            .login-page {
+                padding: 16px;
+            }
+
+            .login-layout {
+                grid-template-columns: minmax(0, 1fr);
+                max-width: 460px;
+                border-radius: 20px;
+            }
+
+            .login-intro {
+                padding: 25px 23px 22px;
+                border-inline-end: 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .login-brand {
+                margin-bottom: 22px;
+            }
+
+            .login-brand .brand-mark {
+                flex-basis: 43px;
+                width: 43px;
+                height: 43px;
+                font-size: 23px;
+            }
+
+            .login-brand strong {
+                font-size: 17px;
+            }
+
+            .login-intro h1 {
+                font-size: 25px;
+            }
+
+            .login-intro > p {
+                margin-top: 10px;
+                font-size: 12px;
+            }
+
+            .login-features {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+                margin-top: 18px;
+            }
+
+            .login-feature {
+                align-items: flex-start;
+                gap: 8px;
+                font-size: 11px;
+            }
+
+            .feature-icon {
+                flex-basis: 29px;
+                width: 29px;
+                height: 29px;
+            }
+
+            .login-form-panel {
+                padding: 27px 23px;
+            }
+
+            .login-form-panel h2 {
+                font-size: 22px;
+            }
+
+            .login-subtitle {
+                margin-bottom: 22px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-features {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-page">
+        <div class="login-layout">
+
+            <section class="login-intro">
+                <div class="login-brand">
+                    <span class="brand-mark">V</span>
+                    <span>
+                        <strong>VEXORA</strong>
+                        <small>HOST PLATFORM</small>
+                    </span>
+                </div>
+
+                <h1>
+                    تحكّم في مشاريعك<br>
+                    <span>من مكان واحد.</span>
+                </h1>
+
+                <p>
+                    لوحة موحدة لإدارة مشاريع Python وملفاتها
+                    وإعداداتها، مع إمكانية ربط مشغّل البوتات عند تجهيزه.
+                </p>
+
+                <div class="login-features">
+                    <div class="login-feature">
+                        <span class="feature-icon" aria-hidden="true">⌘</span>
+                        <span>إدارة المشاريع</span>
+                    </div>
+
+                    <div class="login-feature">
+                        <span class="feature-icon" aria-hidden="true">▤</span>
+                        <span>تنظيم الملفات</span>
+                    </div>
+
+                    <div class="login-feature">
+                        <span class="feature-icon" aria-hidden="true">◷</span>
+                        <span>متابعة النشاط</span>
+                    </div>
+
+                    <div class="login-feature">
+                        <span class="feature-icon" aria-hidden="true">◇</span>
+                        <span>تصميم آمن ومتجاوب</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="login-form-panel">
+                <h2>أهلًا بعودتك</h2>
+
+                <p class="login-subtitle">
+                    سجّل الدخول إلى حساب إدارة VEXORA HOST.
+                </p>
+
+                <div class="flash-container" aria-live="polite">
+                    {% for category, message in get_flashed_messages(with_categories=true) %}
+                    <div class="flash-message flash-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button type="button"
+                                class="flash-close"
+                                aria-label="إغلاق الرسالة"
+                                onclick="this.parentElement.remove()">
+                            ×
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <form class="login-form"
+                      method="post"
+                      action="{{ url_for('auth.login', next=request.args.get('next', '')) }}"
+                      autocomplete="on"
+                      data-prevent-double-submit>
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <div class="form-group">
+                        <label class="form-label" for="username">
+                            اسم المستخدم
+                        </label>
+
+                        <div class="login-input-wrap">
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                class="form-control"
+                                placeholder="اكتب اسم المستخدم"
+                                autocomplete="username"
+                                minlength="3"
+                                maxlength="32"
+                                required
+                                autofocus>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">
+                            كلمة المرور
+                        </label>
+
+                        <div class="login-input-wrap">
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                class="form-control"
+                                placeholder="اكتب كلمة المرور"
+                                autocomplete="current-password"
+                                minlength="12"
+                                maxlength="1024"
+                                required>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary login-submit">
+                        تسجيل الدخول
+                        <span aria-hidden="true">←</span>
+                    </button>
+                </form>
+
+                <div class="login-security">
+                    <span aria-hidden="true">◆</span>
+                    <div>
+                        الدخول مخصص لصاحب الحساب. لا تشارك كلمة المرور
+                        أو مفاتيح الاتصال مع أي شخص.
+                    </div>
+                </div>
+
+                <div class="login-footer">
+                    VEXORA HOST · لوحة إدارة خاصة
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"
+            defer></script>
+</body>
+</html>
