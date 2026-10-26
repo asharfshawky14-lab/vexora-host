@@ -1,0 +1,227 @@
+
+{% extends "base.html" %}
+
+{% block title %}محرر الملفات | {{ project.name }} | VEXORA HOST{% endblock %}
+
+{% block page_heading %}محرر الأكواد{% endblock %}
+
+{% block content %}
+<section class="file-editor-page">
+
+    <header class="page-header">
+        <div>
+            <h2>⌨️ محرر الأكواد</h2>
+            <p>
+                المشروع: <strong>{{ project.name }}</strong>
+            </p>
+            <p>
+                الملف:
+                <code>{{ file_path }}</code>
+            </p>
+        </div>
+
+        <a
+            class="btn btn-secondary"
+            href="{{ url_for('file_manager.index', project_id=project.id) }}"
+        >
+            العودة للملفات
+        </a>
+    </header>
+
+    <section class="dashboard-panel editor-panel">
+        <div class="editor-toolbar">
+            <div class="editor-file-info">
+                <span class="editor-file-icon" aria-hidden="true">📄</span>
+                <div>
+                    <strong>{{ file_path.split('/')[-1] }}</strong>
+                    <small>VEXORA CODE EDITOR</small>
+                </div>
+            </div>
+
+            <div class="editor-toolbar-actions">
+                <span id="editor-status" class="editor-save-status" role="status">
+                    جاهز للتحرير
+                </span>
+
+                <button
+                    class="btn btn-primary"
+                    type="submit"
+                    form="file-editor-form"
+                    id="save-file-button"
+                >
+                    حفظ الملف
+                </button>
+            </div>
+        </div>
+
+        <form
+            id="file-editor-form"
+            method="post"
+            action="{{ url_for('file_manager.edit_file', project_id=project.id, file_path=file_path) }}"
+            data-prevent-double-submit
+        >
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+            >
+
+            <div class="editor-file-path">
+                <span>المسار</span>
+                <code>{{ file_path }}</code>
+            </div>
+
+            <div class="editor-workspace">
+                <div class="editor-gutter" id="editor-gutter" aria-hidden="true">1</div>
+
+                <textarea
+                    id="code-editor"
+                    name="content"
+                    spellcheck="false"
+                    autocapitalize="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    wrap="off"
+                    aria-label="محتوى الملف البرمجي"
+                    required
+                >{{ content }}</textarea>
+            </div>
+
+            <div class="editor-footer">
+                <span id="line-count">الأسطر: 1</span>
+                <span id="char-count">الأحرف: 0</span>
+                <span>احفظ التعديلات قبل مغادرة الصفحة.</span>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-panel editor-help">
+        <h3>اختصارات المحرر</h3>
+
+        <div class="help-item">
+            <span class="help-icon">💾</span>
+            <div>
+                <strong>حفظ الملف</strong>
+                <p>
+                    استخدم زر «حفظ الملف» لحفظ المحتوى على مساحة تخزين المشروع.
+                </p>
+            </div>
+        </div>
+
+        <div class="help-item">
+            <span class="help-icon">⚠️</span>
+            <div>
+                <strong>راجع التعديلات</strong>
+                <p>
+                    تأكد من صحة الكود قبل تشغيل البوت، واحتفظ بنسخة احتياطية من الملفات المهمة.
+                </p>
+            </div>
+        </div>
+    </section>
+
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    "use strict";
+
+    const editor = document.getElementById("code-editor");
+    const gutter = document.getElementById("editor-gutter");
+    const lineCount = document.getElementById("line-count");
+    const charCount = document.getElementById("char-count");
+    const status = document.getElementById("editor-status");
+    const form = document.getElementById("file-editor-form");
+
+    if (!editor || !gutter || !lineCount || !charCount || !status || !form) {
+        return;
+    }
+
+    let originalContent = editor.value;
+    let savedState = true;
+
+    function updateGutter() {
+        const totalLines = Math.max(
+            1,
+            editor.value.split("\n").length
+        );
+
+        gutter.textContent = Array.from(
+            { length: totalLines },
+            (_, index) => index + 1
+        ).join("\n");
+
+        lineCount.textContent = `الأسطر: ${totalLines}`;
+        charCount.textContent = `الأحرف: ${editor.value.length}`;
+    }
+
+    function updateStatus() {
+        savedState = editor.value === originalContent;
+
+        status.textContent = savedState
+            ? "كل التعديلات محفوظة"
+            : "توجد تعديلات غير محفوظة";
+
+        status.classList.toggle("is-saved", savedState);
+        status.classList.toggle("is-dirty", !savedState);
+    }
+
+    editor.addEventListener("input", () => {
+        updateGutter();
+        updateStatus();
+    });
+
+    editor.addEventListener("scroll", () => {
+        gutter.scrollTop = editor.scrollTop;
+    });
+
+    editor.addEventListener("keydown", event => {
+        if (event.key === "Tab") {
+            event.preventDefault();
+
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+
+            editor.setRangeText(
+                "    ",
+                start,
+                end,
+                "end"
+            );
+
+            editor.dispatchEvent(
+                new Event("input", { bubbles: true })
+            );
+        }
+
+        if (
+            (event.ctrlKey || event.metaKey)
+            && event.key.toLowerCase() === "s"
+        ) {
+            event.preventDefault();
+
+            if (typeof form.requestSubmit === "function") {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        }
+    });
+
+    form.addEventListener("submit", () => {
+        status.textContent = "جارٍ إرسال الملف للحفظ...";
+    });
+
+    window.addEventListener("beforeunload", event => {
+        if (editor.value !== originalContent) {
+            event.preventDefault();
+            event.returnValue = "";
+        }
+    });
+
+    updateGutter();
+    updateStatus();
+})();
+</script>
+{% endblock %}
