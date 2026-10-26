@@ -44,14 +44,10 @@ def _projects_root() -> Path:
 
 
 def _project_directory(project: Project) -> Path:
-    """Return the project directory without allowing path traversal."""
-
     root = _projects_root()
-    target = (
-        root
-        / str(project.owner_id)
-        / str(project.id)
-    ).resolve()
+
+    owner_dir = root / str(project.owner_id)
+    target = (owner_dir / str(project.id)).resolve()
 
     if not target.is_relative_to(root):
         raise RuntimeError("Invalid project storage path.")
@@ -73,18 +69,41 @@ def _get_owned_project(project_id: int) -> Project:
 
 def _record_activity(
     action: str,
-    project: Project | None = None,
-    details: str = "",
-) -> None:
-    db.session.add(
-        ActivityLog(
-            user_id=current_user.id,
-            project_id=project.id if project else None,
-            action=action,
-            details=details[:2000],
-            ip_address=request.remote_addr,
-        )
+    project_id: int | None,
+    details: str,
+) -> ActivityLog:
+    entry = ActivityLog(
+        user_id=current_user.id,
+        project_id=project_id,
+        action=action,
+        details=details[:2000],
+        ip_address=request.remote_addr,
     )
+    db.session.add(entry)
+    return entry
+
+
+def _validate_startup_file(value: str) -> bool:
+    if not isinstance(value, str):
+        return False
+
+    value = value.strip()
+
+    if not STARTUP_FILE_PATTERN.fullmatch(value):
+        return False
+
+    if value.startswith("/") or "\\" in value:
+        return False
+
+    parts = value.split("/")
+
+    if any(part in {"", ".", ".."} for part in parts):
+        return False
+
+    if any(part.startswith(".") for part in parts):
+        return False
+
+    return True
 
 
 @projects_bp.get("/")
@@ -107,32 +126,45 @@ def index():
 @login_required
 def create():
     if request.method == "GET":
-        return render_template("project_form.html", project=None)
+        return render_template(
+            "project_form.html",
+            project=None,
+        )
 
     name = request.form.get("name", "").strip()
     description = request.form.get("description", "").strip()
-    startup_file = request.form.get("startup_file", "main.py").strip()
+    startup_file = request.form.get(
+        "startup_file",
+        "main.py",
+    ).strip()
 
     if not name or len(name) > PROJECT_NAME_MAX_LENGTH:
         flash("اسم المشروع مطلوب وبحد أقصى 80 حرفًا.", "error")
-        return render_template("project_form.html", project=None), 400
+        return render_template(
+            "project_form.html",
+            project=None,
+        ), 400
 
     if len(description) > 500:
         flash("وصف المشروع يجب ألا يتجاوز 500 حرف.", "error")
-        return render_template("project_form.html", project=None), 400
+        return render_template(
+            "project_form.html",
+            project=None,
+        ), 400
 
-    if (
-        not STARTUP_FILE_PATTERN.fullmatch(startup_file)
-        or startup_file.startswith("/")
-        or "\\" in startup_file
-        or any(part in {"", ".", ".."} for part in startup_file.split("/"))
-    ):
+    if not _validate_startup_file(startup_file):
         flash("مسار ملف التشغيل غير صالح.", "error")
-        return render_template("project_form.html", project=None), 400
+        return render_template(
+            "project_form.html",
+            project=None,
+        ), 400
 
-    max_projects = current_app.config.get(
-        "MAX_PROJECTS_PER_USER", 20
+    max_projects = int(
+        current_app.config.get("MAX_PROJECTS_PER_USER", 20)
     )
+
+    if max_projects < 1:
+        raise RuntimeError("MAX_PROJECTS_PER_USER must be positive.")
 
     existing_count = Project.query.filter_by(
         owner_id=current_user.id
@@ -153,6 +185,9 @@ def create():
         status="stopped",
     )
 
+    project_dir = None
+    committed = False
+
     try:
         db.session.add(project)
         db.session.flush()
@@ -162,31 +197,48 @@ def create():
 
         _record_activity(
             "project_created",
-            project,
+            project.id,
             f"Created project: {project.name}",
         )
 
         db.session.commit()
+        committed = True
 
     except IntegrityError:
         db.session.rollback()
-        if "project_dir" in locals() and project_dir.exists():
-            shutil.rmtree(project_dir)
-        flash("اسم المشروع مستخدم بالفعل.", "error")
-        return render_template("project_form.html", project=None), 409
+
+        if project_dir is not None and project_dir.exists():
+            shutil.rmtree(project_dir, ignore_errors=True)
+
+        flash(
+            "اسم المشروع مستخدم بالفعل أو توجد بيانات متعارضة.",
+            "error",
+        )
+        return render_template(
+            "project_form.html",
+            project=None,
+        ), 409
 
     except Exception:
         db.session.rollback()
 
-        if "project_dir" in locals() and project_dir.exists():
-            shutil.rmtree(project_dir)
+        if project_dir is not None and project_dir.exists():
+            shutil.rmtree(project_dir, ignore_errors=True)
 
         current_app.logger.exception("Project creation failed")
-        flash("تعذر إنشاء المشروع. راجع سجل الأخطاء.", "error")
-        return render_template("project_form.html", project=None), 500
 
-    flash("تم إنشاء المشروع.", "success")
-    return redirect(url_for("projects.detail", project_id=project.id))
+        flash("تعذر إنشاء المشروع.", "error")
+        return render_template(
+            "project_form.html",
+            project=None,
+        ), 500
+
+    if committed:
+        flash("تم إنشاء المشروع.", "success")
+
+    return redirect(
+        url_for("projects.detail", project_id=project.id)
+    )
 
 
 @projects_bp.get("/<int:project_id>")
@@ -219,17 +271,12 @@ def update(project_id: int):
         )
 
     if len(description) > 500:
-        flash("الوصف طويل جدًا.", "error")
+        flash("الوصف يجب ألا يتجاوز 500 حرف.", "error")
         return redirect(
             url_for("projects.detail", project_id=project.id)
         )
 
-    if (
-        not STARTUP_FILE_PATTERN.fullmatch(startup_file)
-        or startup_file.startswith("/")
-        or "\\" in startup_file
-        or any(part in {"", ".", ".."} for part in startup_file.split("/"))
-    ):
+    if not _validate_startup_file(startup_file):
         flash("مسار ملف التشغيل غير صالح.", "error")
         return redirect(
             url_for("projects.detail", project_id=project.id)
@@ -237,16 +284,17 @@ def update(project_id: int):
 
     old_name = project.name
 
-    project.name = name
-    project.description = description
-    project.startup_file = startup_file
-
     try:
+        project.name = name
+        project.description = description
+        project.startup_file = startup_file
+
         _record_activity(
             "project_updated",
-            project,
+            project.id,
             f"Updated project: {old_name} -> {name}",
         )
+
         db.session.commit()
 
     except IntegrityError:
@@ -275,21 +323,25 @@ def update(project_id: int):
 def delete(project_id: int):
     project = _get_owned_project(project_id)
 
-    # Never delete files while a runner may still be using them.
     if project.status in {"running", "starting", "stopping"}:
         flash(
-            "أوقف المشروع من مشغّل البوتات قبل حذفه.",
+            "لا يمكن حذف المشروع قبل إيقافه من مشغّل البوتات.",
             "error",
         )
         return redirect(url_for("projects.index"))
 
+    project_id_value = project.id
+    project_name = project.name
     project_dir = _project_directory(project)
 
+    # Preserve the deletion record independently of the project row.
+    # project_id is NULL so the foreign key does not erase this audit entry.
     try:
         _record_activity(
             "project_deleted",
-            project,
-            f"Deleted project: {project.name}",
+            None,
+            f"Deleted project id={project_id_value}, "
+            f"name={project_name}",
         )
 
         db.session.delete(project)
@@ -301,18 +353,38 @@ def delete(project_id: int):
         flash("تعذر حذف المشروع من قاعدة البيانات.", "error")
         return redirect(url_for("projects.index"))
 
-    # Delete only the verified directory belonging to this project.
+    # Remove files only after the database transaction succeeds.
     if project_dir.exists():
         try:
+            root = _projects_root()
+
+            if (
+                not project_dir.is_relative_to(root)
+                or project_dir.is_symlink()
+            ):
+                raise RuntimeError(
+                    "Refusing to remove an unsafe project directory."
+                )
+
             shutil.rmtree(project_dir)
+
         except OSError:
             current_app.logger.exception(
-                "Project record deleted but its files could not be removed: %s",
-                project.id,
+                "Project files could not be removed for project id=%s",
+                project_id_value,
             )
             flash(
-                "تم حذف سجل المشروع، لكن تعذر حذف ملفاته. "
-                "تحتاج إلى مراجعة التخزين.",
+                "تم حذف سجل المشروع، لكن تعذر حذف ملفاته من التخزين.",
+                "warning",
+            )
+            return redirect(url_for("projects.index"))
+
+        except RuntimeError:
+            current_app.logger.exception(
+                "Unsafe project directory; refusing deletion."
+            )
+            flash(
+                "تم حذف سجل المشروع، لكن يلزم فحص مجلد التخزين يدويًا.",
                 "warning",
             )
             return redirect(url_for("projects.index"))
@@ -322,8 +394,6 @@ def delete(project_id: int):
 
 
 def register_projects(app):
-    """Register project-management routes."""
-
     if "projects" in app.blueprints:
         raise RuntimeError(
             "The projects blueprint is already registered."
