@@ -1,0 +1,219 @@
+
+{% extends "base.html" %}
+
+{% block title %}مشاريعي | VEXORA HOST{% endblock %}
+
+{% block page_heading %}مشاريعي{% endblock %}
+
+{% block content %}
+<section class="projects-page">
+
+    <header class="page-header">
+        <div>
+            <h2>مشاريع البوتات 🐍</h2>
+            <p>
+                إدارة مشاريع Python وفتح ملفات كل مشروع من لوحة واحدة.
+            </p>
+        </div>
+
+        <a
+            class="btn btn-primary"
+            href="{{ url_for('projects.create') }}"
+        >
+            <span aria-hidden="true">＋</span>
+            مشروع جديد
+        </a>
+    </header>
+
+    <section class="projects-toolbar">
+        <div class="search-box">
+            <label for="project-search">البحث عن مشروع</label>
+            <input
+                id="project-search"
+                type="search"
+                placeholder="اكتب اسم المشروع..."
+                autocomplete="off"
+            >
+        </div>
+
+        <div class="filter-box">
+            <label for="project-status-filter">تصفية حسب الحالة</label>
+            <select id="project-status-filter">
+                <option value="all">كل الحالات</option>
+                <option value="running">يعمل</option>
+                <option value="starting">قيد التشغيل</option>
+                <option value="stopping">قيد الإيقاف</option>
+                <option value="stopped">متوقف</option>
+                <option value="error">به خطأ</option>
+            </select>
+        </div>
+    </section>
+
+    {% if projects %}
+        <div class="projects-grid" id="projects-grid">
+
+            {% for project in projects %}
+                <article
+                    class="project-card"
+                    data-project-name="{{ project.name|lower }}"
+                    data-project-status="{{ project.status }}"
+                >
+                    <div class="project-card-top">
+                        <div class="project-icon" aria-hidden="true">
+                            🐍
+                        </div>
+
+                        {% if project.status == 'running' %}
+                            <span class="status-badge status-running">
+                                يعمل
+                            </span>
+                        {% elif project.status == 'starting' %}
+                            <span class="status-badge status-pending">
+                                يبدأ التشغيل
+                            </span>
+                        {% elif project.status == 'stopping' %}
+                            <span class="status-badge status-pending">
+                                جارٍ الإيقاف
+                            </span>
+                        {% elif project.status == 'error' %}
+                            <span class="status-badge status-error">
+                                خطأ
+                            </span>
+                        {% else %}
+                            <span class="status-badge status-stopped">
+                                متوقف
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="project-card-body">
+                        <h3>{{ project.name }}</h3>
+
+                        <p class="project-description">
+                            {{ project.description or 'لا يوجد وصف لهذا المشروع.' }}
+                        </p>
+
+                        <div class="project-meta">
+                            <div>
+                                <span>لغة التشغيل</span>
+                                <strong>Python {{ project.python_version }}</strong>
+                            </div>
+
+                            <div>
+                                <span>ملف البداية</span>
+                                <strong>{{ project.startup_file }}</strong>
+                            </div>
+
+                            <div>
+                                <span>تاريخ الإنشاء</span>
+                                <strong>
+                                    {{ project.created_at.strftime('%Y-%m-%d') if project.created_at else '—' }}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card-actions">
+                        <a
+                            class="btn btn-primary"
+                            href="{{ url_for('projects.detail', project_id=project.id) }}"
+                        >
+                            إدارة المشروع
+                        </a>
+
+                        <a
+                            class="btn btn-secondary"
+                            href="{{ url_for('file_manager.index', project_id=project.id) }}"
+                        >
+                            الملفات
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+
+        </div>
+
+        <div class="empty-state" id="no-filter-results" hidden>
+            <div class="empty-state-icon">🔎</div>
+            <h3>مفيش نتائج مطابقة</h3>
+            <p>جرّب تغيّر كلمة البحث أو تختار حالة مختلفة.</p>
+        </div>
+
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🚀</div>
+            <h3>لسه مفيش مشاريع</h3>
+            <p>
+                أنشئ أول مشروع عشان تبدأ إضافة ملفات البوت وإعداداته.
+            </p>
+
+            <a
+                class="btn btn-primary"
+                href="{{ url_for('projects.create') }}"
+            >
+                إنشاء أول مشروع
+            </a>
+        </div>
+    {% endif %}
+
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    "use strict";
+
+    const searchInput = document.getElementById("project-search");
+    const statusFilter = document.getElementById("project-status-filter");
+    const grid = document.getElementById("projects-grid");
+    const noResults = document.getElementById("no-filter-results");
+
+    if (!searchInput || !statusFilter || !grid) {
+        return;
+    }
+
+    const cards = Array.from(
+        grid.querySelectorAll("[data-project-name]")
+    );
+
+    function filterProjects() {
+        const searchTerm = searchInput.value
+            .trim()
+            .toLocaleLowerCase();
+
+        const selectedStatus = statusFilter.value;
+        let visibleCount = 0;
+
+        for (const card of cards) {
+            const name = (
+                card.dataset.projectName || ""
+            ).toLocaleLowerCase();
+
+            const status = card.dataset.projectStatus || "";
+
+            const matchesName = name.includes(searchTerm);
+            const matchesStatus = (
+                selectedStatus === "all"
+                || status === selectedStatus
+            );
+
+            const visible = matchesName && matchesStatus;
+
+            card.hidden = !visible;
+
+            if (visible) {
+                visibleCount += 1;
+            }
+        }
+
+        if (noResults) {
+            noResults.hidden = visibleCount !== 0;
+        }
+    }
+
+    searchInput.addEventListener("input", filterProjects);
+    statusFilter.addEventListener("change", filterProjects);
+})();
+</script>
+{% endblock %}
