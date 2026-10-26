@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#080b14">
+
+    <title>{% block title %}VEXORA HOST{% endblock %}</title>
+
+    <meta name="description"
+          content="VEXORA HOST — منصة إدارة مشاريع واستضافة بوتات Python.">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/app.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="app-shell">
+
+        <aside class="sidebar" id="sidebar">
+            <a class="brand" href="{{ url_for('dashboard.index') }}">
+                <span class="brand-mark">V</span>
+                <span class="brand-text">
+                    <strong>VEXORA</strong>
+                    <small>HOST PLATFORM</small>
+                </span>
+            </a>
+
+            <div class="sidebar-caption">القائمة الرئيسية</div>
+
+            <nav class="sidebar-nav" aria-label="القائمة الرئيسية">
+                <a class="nav-link"
+                   href="{{ url_for('dashboard.index') }}">
+                    <span class="nav-icon">⌂</span>
+                    <span>لوحة التحكم</span>
+                </a>
+
+                <a class="nav-link"
+                   href="{{ url_for('projects.index') }}">
+                    <span class="nav-icon">▤</span>
+                    <span>مشاريعي</span>
+                </a>
+
+                <a class="nav-link"
+                   href="{{ url_for('dashboard.index') }}#activity">
+                    <span class="nav-icon">◷</span>
+                    <span>سجل النشاط</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-status">
+                    <span class="status-indicator"></span>
+                    <div>
+                        <strong>VEXORA HOST</strong>
+                        <small>لوحة إدارة المشاريع</small>
+                    </div>
+                </div>
+
+                {% if current_user.is_authenticated %}
+                <form action="{{ url_for('auth.logout') }}"
+                      method="post"
+                      class="logout-form">
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ csrf_token() }}">
+                    <button class="logout-button" type="submit">
+                        <span aria-hidden="true">↪</span>
+                        تسجيل الخروج
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </aside>
+
+        <div class="main-area">
+            <header class="topbar">
+                <button class="menu-toggle"
+                        type="button"
+                        id="menuToggle"
+                        aria-label="فتح القائمة"
+                        aria-controls="sidebar"
+                        aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <div class="topbar-heading">
+                    <strong>{% block page_heading %}لوحة التحكم{% endblock %}</strong>
+                    <small>إدارة مشاريع Python</small>
+                </div>
+
+                <div class="topbar-actions">
+                    {% if current_user.is_authenticated %}
+                    <div class="account-chip">
+                        <span class="account-avatar">
+                            {{ current_user.username[:1]|upper }}
+                        </span>
+                        <span class="account-name">
+                            {{ current_user.username }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <main class="page-content">
+                <div class="flash-container" aria-live="polite">
+                    {% for category, message in get_flashed_messages(with_categories=true) %}
+                    <div class="flash-message flash-{{ category }}">
+                        <span>{{ message }}</span>
+                        <button type="button"
+                                class="flash-close"
+                                aria-label="إغلاق الرسالة"
+                                onclick="this.parentElement.remove()">
+                            ×
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <footer class="site-footer">
+                <span>VEXORA HOST</span>
+                <span>إدارة مشاريعك في مكان واحد</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"
+            defer></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
