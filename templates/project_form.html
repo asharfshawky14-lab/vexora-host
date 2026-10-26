@@ -1,0 +1,191 @@
+
+{% extends "base.html" %}
+
+{% block title %}
+    {% if project %}تعديل المشروع{% else %}إنشاء مشروع جديد{% endif %} | VEXORA HOST
+{% endblock %}
+
+{% block page_heading %}
+    {% if project %}تعديل المشروع{% else %}إنشاء مشروع جديد{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="project-form-page">
+
+    <header class="page-header">
+        <div>
+            <h2>
+                {% if project %}
+                    تعديل إعدادات المشروع
+                {% else %}
+                    إنشاء مشروع Python جديد 🐍
+                {% endif %}
+            </h2>
+
+            <p>
+                {% if project %}
+                    عدّل بيانات المشروع وملف التشغيل الرئيسي.
+                {% else %}
+                    جهّز مشروعك لإضافة ملفات البوت وإعدادات التشغيل.
+                {% endif %}
+            </p>
+        </div>
+
+        <a
+            class="btn btn-secondary"
+            href="{% if project %}{{ url_for('projects.detail', project_id=project.id) }}{% else %}{{ url_for('projects.index') }}{% endif %}"
+        >
+            العودة
+        </a>
+    </header>
+
+    <div class="form-layout">
+        <section class="dashboard-panel form-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>بيانات المشروع</h3>
+                    <p>الحقول المعلّمة مطلوبة.</p>
+                </div>
+            </div>
+
+            <form
+                method="post"
+                action="{% if project %}{{ url_for('projects.update', project_id=project.id) }}{% else %}{{ url_for('projects.create') }}{% endif %}"
+                data-prevent-double-submit
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="form-group">
+                    <label for="name">اسم المشروع *</label>
+
+                    <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        minlength="1"
+                        maxlength="80"
+                        value="{{ project.name if project else request.form.get('name', '') }}"
+                        placeholder="مثال: Telegram Downloader"
+                        autocomplete="off"
+                        required
+                    >
+
+                    <small>حتى 80 حرفًا.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">وصف المشروع</label>
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="4"
+                        maxlength="500"
+                        placeholder="اكتب وصفًا مختصرًا للبوت ووظيفته..."
+                    >{{ project.description if project else request.form.get('description', '') }}</textarea>
+
+                    <small>اختياري، بحد أقصى 500 حرف.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="startup_file">مسار ملف التشغيل الرئيسي *</label>
+
+                    <input
+                        id="startup_file"
+                        name="startup_file"
+                        type="text"
+                        maxlength="255"
+                        pattern="[A-Za-z0-9_.\-/]{1,255}"
+                        value="{{ project.startup_file if project else request.form.get('startup_file', 'main.py') }}"
+                        placeholder="main.py"
+                        spellcheck="false"
+                        autocapitalize="none"
+                        required
+                    >
+
+                    <small>
+                        مثال: main.py أو src/main.py. لا تستخدم مسارات خارج مجلد المشروع.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>بيئة التشغيل</label>
+
+                    <input
+                        type="text"
+                        value="Python 3.12"
+                        readonly
+                        aria-readonly="true"
+                    >
+
+                    <small>
+                        إصدار Python الافتراضي للمشروع حاليًا.
+                    </small>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">
+                        {% if project %}حفظ التعديلات{% else %}إنشاء المشروع{% endif %}
+                    </button>
+
+                    <a
+                        class="btn btn-secondary"
+                        href="{% if project %}{{ url_for('projects.detail', project_id=project.id) }}{% else %}{{ url_for('projects.index') }}{% endif %}"
+                    >
+                        إلغاء
+                    </a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="dashboard-panel form-help-panel">
+            <h3>قبل ما تبدأ</h3>
+
+            <div class="help-item">
+                <span class="help-icon">📄</span>
+                <div>
+                    <strong>ملف التشغيل</strong>
+                    <p>
+                        لازم يكون مسار الملف الرئيسي مطابقًا لاسم الملف الذي ستضيفه داخل المشروع.
+                    </p>
+                </div>
+            </div>
+
+            <div class="help-item">
+                <span class="help-icon">📦</span>
+                <div>
+                    <strong>المكتبات</strong>
+                    <p>
+                        يمكن إضافة المكتبات المطلوبة في requirements.txt عندما نجهّز إدارة الملفات والتبعيات.
+                    </p>
+                </div>
+            </div>
+
+            <div class="help-item">
+                <span class="help-icon">🔐</span>
+                <div>
+                    <strong>بيانات الدخول</strong>
+                    <p>
+                        لا تضع رموز البوتات أو كلمات المرور داخل الكود؛ سنربطها بإعدادات أسرار منفصلة.
+                    </p>
+                </div>
+            </div>
+
+            <div class="help-item">
+                <span class="help-icon">⚙️</span>
+                <div>
+                    <strong>التشغيل الحقيقي</strong>
+                    <p>
+                        إنشاء المشروع يحفظ بياناته ويفتح مساحة ملفاته، لكنه لا يشغّل البوت تلقائيًا حتى ربط مشغّل Python الفعلي.
+                    </p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+</section>
+{% endblock %}
