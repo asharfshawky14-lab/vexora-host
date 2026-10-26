@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+
+{% block title %}خطأ في الخادم | VEXORA HOST{% endblock %}
+
+{% block page_heading %}خطأ في الخادم{% endblock %}
+
+{% block content %}
+<section class="server-error-page">
+    <div class="server-error-card">
+        <div class="server-error-icon" aria-hidden="true">
+            ⚙️
+        </div>
+
+        <p class="server-error-code">500</p>
+
+        <h2>حصل خطأ غير متوقع</h2>
+
+        <p class="server-error-description">
+            الخادم واجه مشكلة أثناء تنفيذ طلبك.
+            بياناتك ومشاريعك مش المفروض تتأثر بالخطأ ده.
+            حاول تاني بعد شوية.
+        </p>
+
+        <div class="server-error-actions">
+            <a
+                class="btn btn-primary"
+                href="{{ url_for('dashboard.index') }}"
+            >
+                الرجوع للوحة التحكم
+            </a>
+
+            <button
+                class="btn btn-secondary"
+                type="button"
+                onclick="window.location.reload()"
+            >
+                إعادة المحاولة
+            </button>
+        </div>
+
+        <p class="server-error-footer">
+            VEXORA HOST · لو المشكلة استمرت، راجع سجلات الخادم.
+        </p>
+    </div>
+</section>
+
+<style>
+    .server-error-page {
+        display: grid;
+        place-items: center;
+        min-height: 55vh;
+        padding: 24px 12px;
+    }
+
+    .server-error-card {
+        width: 100%;
+        max-width: 600px;
+        padding: clamp(24px, 5vw, 42px);
+        border: 1px solid rgba(248, 113, 113, 0.22);
+        border-radius: 22px;
+        background:
+            radial-gradient(
+                circle at 50% 0,
+                rgba(239, 68, 68, 0.12),
+                transparent 55%
+            ),
+            #141420;
+        text-align: center;
+    }
+
+    .server-error-icon {
+        display: grid;
+        place-items: center;
+        width: 82px;
+        height: 82px;
+        margin: 0 auto 18px;
+        border: 1px solid rgba(248, 113, 113, 0.25);
+        border-radius: 24px;
+        background: rgba(239, 68, 68, 0.08);
+        font-size: 36px;
+    }
+
+    .server-error-code {
+        margin: 0;
+        color: #f87171;
+        font-size: clamp(52px, 12vw, 82px);
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 3px;
+    }
+
+    .server-error-card h2 {
+        margin: 16px 0 10px;
+        color: #f4f4f8;
+        font-size: clamp(20px, 4vw, 27px);
+    }
+
+    .server-error-description {
+        max-width: 440px;
+        margin: 0 auto;
+        color: #a1a1b5;
+        font-size: 14px;
+        line-height: 2;
+    }
+
+    .server-error-actions {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 27px;
+    }
+
+    .server-error-footer {
+        margin: 30px 0 0;
+        color: #77778e;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    @media (max-width: 420px) {
+        .server-error-actions {
+            flex-direction: column;
+        }
+
+        .server-error-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
