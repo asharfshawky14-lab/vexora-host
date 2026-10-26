@@ -1,0 +1,279 @@
+
+{% extends "base.html" %}
+
+{% block title %}ملفات {{ project.name }} | VEXORA HOST{% endblock %}
+
+{% block page_heading %}مدير الملفات{% endblock %}
+
+{% block content %}
+<section class="file-manager-page">
+
+    <header class="page-header">
+        <div>
+            <h2>📁 مدير الملفات</h2>
+            <p>
+                المشروع:
+                <strong>{{ project.name }}</strong>
+            </p>
+            <p>
+                أنشئ ملفات البوت وعدّل الأكواد وأدر المكتبات المطلوبة.
+            </p>
+        </div>
+
+        <a
+            class="btn btn-secondary"
+            href="{{ url_for('projects.detail', project_id=project.id) }}"
+        >
+            العودة للمشروع
+        </a>
+    </header>
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <div class="stat-icon">📂</div>
+            <div class="stat-info">
+                <span class="stat-label">المشروع الحالي</span>
+                <strong class="stat-value">#{{ project.id }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">🐍</div>
+            <div class="stat-info">
+                <span class="stat-label">ملف التشغيل</span>
+                <strong class="stat-value">
+                    {{ project.startup_file }}
+                </strong>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h3>ملفات المشروع</h3>
+                <p>
+                    الملفات الموجودة داخل مساحة المشروع فقط.
+                </p>
+            </div>
+
+            <a
+                class="btn btn-primary"
+                href="{{ url_for('file_manager.new_file', project_id=project.id) }}"
+            >
+                ＋ ملف جديد
+            </a>
+        </div>
+
+        <div class="file-toolbar">
+            <div class="form-group">
+                <label for="file-search">البحث عن ملف</label>
+                <input
+                    id="file-search"
+                    type="search"
+                    placeholder="مثال: main.py"
+                    autocomplete="off"
+                >
+            </div>
+        </div>
+
+        {% if files %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">اسم الملف</th>
+                            <th scope="col">المسار</th>
+                            <th scope="col">الحجم</th>
+                            <th scope="col">الإجراءات</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="files-table-body">
+                        {% for file in files %}
+                            <tr data-file-name="{{ file.path|lower }}">
+                                <td>
+                                    <div class="project-name-cell">
+                                        <span class="project-symbol" aria-hidden="true">
+                                            {% if file.path.endswith('.py') %}
+                                                🐍
+                                            {% elif file.path.endswith('.txt') %}
+                                                📃
+                                            {% elif file.path.endswith('.json') %}
+                                                🧩
+                                            {% elif file.path.endswith('.html') %}
+                                                🌐
+                                            {% elif file.path.endswith('.css') %}
+                                                🎨
+                                            {% else %}
+                                                📄
+                                            {% endif %}
+                                        </span>
+
+                                        <strong>
+                                            {{ file.path.split('/')[-1] }}
+                                        </strong>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <code>{{ file.path }}</code>
+                                </td>
+
+                                <td>
+                                    {% if file.size < 1024 %}
+                                        {{ file.size }} بايت
+                                    {% elif file.size < 1048576 %}
+                                        {{ "%.1f"|format(file.size / 1024) }} كيلوبايت
+                                    {% else %}
+                                        {{ "%.2f"|format(file.size / 1048576) }} ميجابايت
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <div class="file-actions">
+                                        <a
+                                            class="btn btn-primary btn-small"
+                                            href="{{ url_for('file_manager.edit_file', project_id=project.id, file_path=file.path) }}"
+                                        >
+                                            تعديل
+                                        </a>
+
+                                        <form
+                                            method="post"
+                                            action="{{ url_for('file_manager.delete_file', project_id=project.id) }}"
+                                            data-confirm="هل أنت متأكد من حذف الملف {{ file.path }}؟"
+                                            data-prevent-double-submit
+                                        >
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="{{ csrf_token() }}"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="file_path"
+                                                value="{{ file.path }}"
+                                            >
+
+                                            <button
+                                                class="btn btn-danger btn-small"
+                                                type="submit"
+                                            >
+                                                حذف
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" id="files-no-results" hidden>
+                <div class="empty-state-icon">🔎</div>
+                <h3>لا توجد نتائج</h3>
+                <p>جرّب البحث باسم ملف مختلف.</p>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📂</div>
+                <h3>مجلد المشروع فارغ</h3>
+                <p>
+                    ابدأ بإنشاء ملف main.py أو ارفع ملفات البوت من مدير الملفات.
+                </p>
+
+                <a
+                    class="btn btn-primary"
+                    href="{{ url_for('file_manager.new_file', project_id=project.id) }}"
+                >
+                    إنشاء أول ملف
+                </a>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="dashboard-panel">
+        <div class="panel-heading">
+            <div>
+                <h3>نصائح للمشروع</h3>
+                <p>تنظيم الملفات يساعدك على تشغيل البوت بصورة صحيحة.</p>
+            </div>
+        </div>
+
+        <div class="help-item">
+            <span class="help-icon">🐍</span>
+            <div>
+                <strong>main.py</strong>
+                <p>ملف البداية الافتراضي للمشروع.</p>
+            </div>
+        </div>
+
+        <div class="help-item">
+            <span class="help-icon">📦</span>
+            <div>
+                <strong>requirements.txt</strong>
+                <p>قائمة مكتبات Python التي يحتاجها البوت.</p>
+            </div>
+        </div>
+
+        <div class="help-item">
+            <span class="help-icon">🔐</span>
+            <div>
+                <strong>حماية الأسرار</strong>
+                <p>
+                    لا تضع توكن البوت أو كلمات المرور في ملفات عامة؛ سنربطها بإعدادات أسرار منفصلة.
+                </p>
+            </div>
+        </div>
+    </section>
+
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(() => {
+    "use strict";
+
+    const search = document.getElementById("file-search");
+    const tableBody = document.getElementById("files-table-body");
+    const noResults = document.getElementById("files-no-results");
+
+    if (!search || !tableBody) {
+        return;
+    }
+
+    const rows = Array.from(
+        tableBody.querySelectorAll("[data-file-name]")
+    );
+
+    function filterFiles() {
+        const query = search.value.trim().toLocaleLowerCase();
+        let visible = 0;
+
+        for (const row of rows) {
+            const name = (
+                row.dataset.fileName || ""
+            ).toLocaleLowerCase();
+
+            const matches = name.includes(query);
+
+            row.hidden = !matches;
+
+            if (matches) {
+                visible += 1;
+            }
+        }
+
+        if (noResults) {
+            noResults.hidden = visible !== 0;
+        }
+    }
+
+    search.addEventListener("input", filterFiles);
+})();
+</script>
+{% endblock %}
