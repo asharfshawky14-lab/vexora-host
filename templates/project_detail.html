@@ -1,0 +1,218 @@
+
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} | VEXORA HOST{% endblock %}
+
+{% block page_heading %}تفاصيل المشروع{% endblock %}
+
+{% block content %}
+<section class="project-detail-page">
+
+    <header class="page-header">
+        <div>
+            <h2>🐍 {{ project.name }}</h2>
+            <p>
+                {{ project.description or 'لا يوجد وصف لهذا المشروع.' }}
+            </p>
+        </div>
+
+        <a class="btn btn-secondary" href="{{ url_for('projects.index') }}">
+            العودة للمشاريع
+        </a>
+    </header>
+
+    <section class="stats-grid">
+        <article class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <span class="stat-label">رقم المشروع</span>
+                <strong class="stat-value">#{{ project.id }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">🐍</div>
+            <div class="stat-info">
+                <span class="stat-label">بيئة التشغيل</span>
+                <strong class="stat-value">Python {{ project.python_version }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">📄</div>
+            <div class="stat-info">
+                <span class="stat-label">ملف البداية</span>
+                <strong class="stat-value">{{ project.startup_file }}</strong>
+            </div>
+        </article>
+
+        <article class="stat-card">
+            <div class="stat-icon">⚙️</div>
+            <div class="stat-info">
+                <span class="stat-label">الحالة المسجلة</span>
+                <strong class="stat-value">
+                    {% if project.status == 'running' %}
+                        يعمل
+                    {% elif project.status == 'starting' %}
+                        قيد التشغيل
+                    {% elif project.status == 'stopping' %}
+                        قيد الإيقاف
+                    {% elif project.status == 'error' %}
+                        خطأ
+                    {% else %}
+                        متوقف
+                    {% endif %}
+                </strong>
+            </div>
+        </article>
+    </section>
+
+    <div class="form-layout">
+
+        <section class="dashboard-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>إعدادات المشروع</h3>
+                    <p>تعديل اسم المشروع ووصفه وملف البداية.</p>
+                </div>
+            </div>
+
+            <form
+                method="post"
+                action="{{ url_for('projects.update', project_id=project.id) }}"
+                data-prevent-double-submit
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="form-group">
+                    <label for="name">اسم المشروع</label>
+                    <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        value="{{ project.name }}"
+                        minlength="1"
+                        maxlength="80"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="description">الوصف</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="4"
+                        maxlength="500"
+                    >{{ project.description }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="startup_file">ملف التشغيل الرئيسي</label>
+                    <input
+                        id="startup_file"
+                        name="startup_file"
+                        type="text"
+                        value="{{ project.startup_file }}"
+                        minlength="1"
+                        maxlength="255"
+                        pattern="[A-Za-z0-9_.\-/]{1,255}"
+                        required
+                    >
+                </div>
+
+                <button class="btn btn-primary" type="submit">
+                    حفظ التعديلات
+                </button>
+            </form>
+        </section>
+
+        <aside class="dashboard-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>إدارة الملفات</h3>
+                    <p>افتح ملفات المشروع وأضف كود البوت.</p>
+                </div>
+            </div>
+
+            <div class="help-item">
+                <span class="help-icon">📁</span>
+                <div>
+                    <strong>ملفات المشروع</strong>
+                    <p>
+                        إدارة ملفات Python وملف المكتبات داخل مساحة المشروع.
+                    </p>
+                </div>
+            </div>
+
+            <a
+                class="btn btn-primary"
+                href="{{ url_for('file_manager.index', project_id=project.id) }}"
+            >
+                فتح مدير الملفات
+            </a>
+
+            <hr>
+
+            <div class="help-item">
+                <span class="help-icon">🔒</span>
+                <div>
+                    <strong>حالة التشغيل</strong>
+                    <p>
+                        الحالة المعروضة محفوظة في قاعدة البيانات، ولا تؤكد وحدها أن عملية Python تعمل فعليًا.
+                    </p>
+                </div>
+            </div>
+
+            {% if project.last_started_at %}
+                <div class="project-meta">
+                    <div>
+                        <span>آخر بدء مسجل</span>
+                        <strong>
+                            {{ project.last_started_at.strftime('%Y-%m-%d %H:%M') }}
+                        </strong>
+                    </div>
+                </div>
+            {% else %}
+                <p class="field-help">
+                    لم يُسجَّل بدء تشغيل لهذا المشروع حتى الآن.
+                </p>
+            {% endif %}
+        </aside>
+
+    </div>
+
+    <section class="dashboard-panel danger-zone">
+        <div class="panel-heading">
+            <div>
+                <h3>منطقة الخطر</h3>
+                <p>
+                    حذف المشروع يمسح سجل المشروع وملفاته من مساحة التخزين.
+                </p>
+            </div>
+        </div>
+
+        <form
+            method="post"
+            action="{{ url_for('projects.delete', project_id=project.id) }}"
+            data-confirm="هل أنت متأكد من حذف المشروع؟ لا يمكن التراجع عن هذا الإجراء."
+            data-prevent-double-submit
+        >
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+            >
+
+            <button class="btn btn-danger" type="submit">
+                حذف المشروع نهائيًا
+            </button>
+        </form>
+    </section>
+
+</section>
+{% endblock %}
