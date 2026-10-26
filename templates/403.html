@@ -1,0 +1,128 @@
+
+{% extends "base.html" %}
+
+{% block title %}رفض الوصول | VEXORA HOST{% endblock %}
+
+{% block page_heading %}رفض الوصول{% endblock %}
+
+{% block content %}
+<section class="error-page">
+    <div class="error-card">
+        <div class="error-visual" aria-hidden="true">🔒</div>
+
+        <p class="error-code">403</p>
+
+        <h2>مش مسموح لك بالدخول</h2>
+
+        <p class="error-description">
+            الصفحة دي أو العملية المطلوبة مش متاحة بالصلاحيات الحالية.
+            لو بتعتقد إن ده حصل بالخطأ، ارجع للوحة التحكم وحاول تاني.
+        </p>
+
+        <div class="error-actions">
+            <a
+                class="btn btn-primary"
+                href="{{ url_for('dashboard.index') }}"
+            >
+                العودة للوحة التحكم
+            </a>
+
+            <a
+                class="btn btn-secondary"
+                href="{{ url_for('projects.index') }}"
+            >
+                مشاريعي
+            </a>
+        </div>
+
+        <p class="error-footer">
+            VEXORA HOST · حماية المشاريع والملفات
+        </p>
+    </div>
+</section>
+
+<style>
+    .error-page {
+        display: grid;
+        place-items: center;
+        min-height: 55vh;
+        padding: 24px 12px;
+    }
+
+    .error-card {
+        width: 100%;
+        max-width: 600px;
+        padding: clamp(24px, 5vw, 42px);
+        border: 1px solid rgba(167, 139, 250, 0.22);
+        border-radius: 22px;
+        background:
+            radial-gradient(
+                circle at 50% 0,
+                rgba(124, 58, 237, 0.13),
+                transparent 55%
+            ),
+            #141420;
+        text-align: center;
+    }
+
+    .error-visual {
+        display: grid;
+        place-items: center;
+        width: 82px;
+        height: 82px;
+        margin: 0 auto 18px;
+        border: 1px solid rgba(248, 113, 113, 0.25);
+        border-radius: 24px;
+        background: rgba(127, 29, 29, 0.16);
+        font-size: 36px;
+    }
+
+    .error-code {
+        margin: 0;
+        color: #a78bfa;
+        font-size: clamp(52px, 12vw, 82px);
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: 3px;
+    }
+
+    .error-card h2 {
+        margin: 16px 0 10px;
+        color: #f4f4f8;
+        font-size: clamp(20px, 4vw, 27px);
+    }
+
+    .error-description {
+        max-width: 430px;
+        margin: 0 auto;
+        color: #a1a1b5;
+        font-size: 14px;
+        line-height: 2;
+    }
+
+    .error-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 27px;
+    }
+
+    .error-footer {
+        margin: 30px 0 0;
+        color: #77778e;
+        font-size: 11px;
+    }
+
+    @media (max-width: 420px) {
+        .error-actions {
+            flex-direction: column;
+        }
+
+        .error-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
