@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <meta name="theme-color" content="#0b0b12">
+
+    <title>إنشاء حساب المالك | VEXORA HOST</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/app.css') }}"
+    >
+
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            background:
+                radial-gradient(
+                    circle at 15% 15%,
+                    rgba(124, 58, 237, 0.18),
+                    transparent 35%
+                ),
+                radial-gradient(
+                    circle at 85% 85%,
+                    rgba(6, 182, 212, 0.12),
+                    transparent 35%
+                ),
+                #0b0b12;
+            color: #f4f4f8;
+            font-family:
+                system-ui,
+                -apple-system,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        .setup-wrapper {
+            width: 100%;
+            max-width: 470px;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 26px;
+        }
+
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 68px;
+            height: 68px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(167, 139, 250, 0.45);
+            border-radius: 22px;
+            background: rgba(124, 58, 237, 0.13);
+            box-shadow:
+                0 0 35px rgba(124, 58, 237, 0.2),
+                inset 0 0 20px rgba(6, 182, 212, 0.06);
+            color: #c4b5fd;
+            font-size: 30px;
+            font-weight: 900;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: clamp(25px, 6vw, 34px);
+            font-weight: 850;
+            letter-spacing: 1px;
+        }
+
+        .brand h1 span {
+            color: #a78bfa;
+        }
+
+        .brand p {
+            margin: 10px 0 0;
+            color: #a1a1b5;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .setup-card {
+            padding: 27px;
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            border-radius: 22px;
+            background: rgba(20, 20, 32, 0.94);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(16px);
+        }
+
+        .setup-card h2 {
+            margin: 0 0 8px;
+            font-size: 21px;
+        }
+
+        .intro {
+            margin: 0 0 23px;
+            color: #a1a1b5;
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .security-notice {
+            margin-bottom: 21px;
+            padding: 12px 14px;
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            border-radius: 12px;
+            background: rgba(6, 182, 212, 0.07);
+            color: #a5f3fc;
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+        .form-group {
+            margin-bottom: 17px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e5e7eb;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .form-group input {
+            display: block;
+            width: 100%;
+            min-height: 47px;
+            padding: 12px 14px;
+            border: 1px solid #343448;
+            border-radius: 12px;
+            outline: none;
+            background: #10101a;
+            color: #f4f4f8;
+            font: inherit;
+            font-size: 14px;
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.13);
+        }
+
+        .form-group input::placeholder {
+            color: #66667d;
+        }
+
+        .field-help {
+            display: block;
+            margin-top: 7px;
+            color: #85859d;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .submit-button {
+            width: 100%;
+            min-height: 49px;
+            margin-top: 5px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(110deg, #7c3aed, #6d5dfc 55%, #0891b2);
+            color: #fff;
+            font: inherit;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 28px rgba(124, 58, 237, 0.2);
+            transition:
+                transform 0.2s ease,
+                filter 0.2s ease;
+        }
+
+        .submit-button:hover {
+            filter: brightness(1.12);
+            transform: translateY(-1px);
+        }
+
+        .submit-button:focus-visible {
+            outline: 2px solid #67e8f9;
+            outline-offset: 4px;
+        }
+
+        .flash-messages {
+            margin-bottom: 18px;
+        }
+
+        .flash-message {
+            margin-bottom: 9px;
+            padding: 12px 14px;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 11px;
+            background: rgba(127, 29, 29, 0.2);
+            color: #fecaca;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .flash-message.success {
+            border-color: rgba(52, 211, 153, 0.3);
+            background: rgba(6, 95, 70, 0.2);
+            color: #a7f3d0;
+        }
+
+        .footer-note {
+            margin: 19px 0 0;
+            color: #77778e;
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.9;
+        }
+
+        @media (max-width: 420px) {
+            .setup-card {
+                padding: 21px 17px;
+            }
+
+            .brand-logo {
+                width: 59px;
+                height: 59px;
+                border-radius: 19px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="setup-wrapper">
+        <header class="brand">
+            <div class="brand-logo" aria-hidden="true">V</div>
+
+            <h1>VEXORA <span>HOST</span></h1>
+
+            <p>
+                جهّز حساب المالك الأساسي لإدارة منصة استضافة البوتات.
+            </p>
+        </header>
+
+        <section class="setup-card" aria-labelledby="setup-title">
+            <h2 id="setup-title">إنشاء حساب المالك</h2>
+
+            <p class="intro">
+                أنشئ حساب الإدارة الأول. التسجيل العام غير متاح من هذه الصفحة.
+            </p>
+
+            <div class="security-notice">
+                🔐 استخدم رمز التهيئة الذي ضبطته في إعدادات بيئة الاستضافة.
+                لا تشارك الرمز أو كلمة المرور مع أي شخص.
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages" aria-live="polite">
+                        {% for category, message in messages %}
+                            <div
+                                class="flash-message{% if category == 'success' %} success{% endif %}"
+                                role="alert"
+                            >
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form
+                method="post"
+                action="{{ url_for('auth.setup_owner') }}"
+                data-prevent-double-submit
+            >
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token() }}"
+                >
+
+                <div class="form-group">
+                    <label for="setup_token">رمز التهيئة السري</label>
+
+                    <input
+                        id="setup_token"
+                        name="setup_token"
+                        type="password"
+                        placeholder="أدخل رمز التهيئة"
+                        minlength="32"
+                        maxlength="512"
+                        autocomplete="off"
+                        required
+                    >
+
+                    <span class="field-help">
+                        لازم يكون الرمز مضبوطًا مسبقًا في متغير
+                        OWNER_SETUP_TOKEN على الاستضافة.
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">اسم المستخدم</label>
+
+                    <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        placeholder="مثال: vexora_admin"
+                        minlength="3"
+                        maxlength="32"
+                        pattern="[A-Za-z0-9_-]{3,32}"
+                        title="من 3 إلى 32 حرفًا أو رقمًا أو شرطة أو شرطة سفلية."
+                        autocomplete="username"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        required
+                    >
+
+                    <span class="field-help">
+                        مسموح بالحروف الإنجليزية والأرقام والرمزين _ و -.
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">البريد الإلكتروني</label>
+
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="admin@example.com"
+                        maxlength="254"
+                        autocomplete="email"
+                        inputmode="email"
+                        autocapitalize="none"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="أنشئ كلمة مرور قوية"
+                        minlength="12"
+                        maxlength="1024"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                    <span class="field-help">
+                        الحد الأدنى 12 حرفًا. استخدم كلمة مرور طويلة وفريدة.
+                    </span>
+                </div>
+
+                <button class="submit-button" type="submit">
+                    إنشاء حساب المالك
+                </button>
+            </form>
+        </section>
+
+        <p class="footer-note">
+            VEXORA HOST · لوحة إدارة خاصة<br>
+            صفحة التهيئة مصممة للاستخدام مرة واحدة فقط.
+        </p>
+    </main>
+
+    <script
+        src="{{ url_for('static', filename='js/app.js') }}"
+        defer
+    ></script>
+</body>
+</html>
